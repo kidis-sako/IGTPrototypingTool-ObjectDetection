@@ -67,6 +67,10 @@ public class ImageDataProcessor {
      * @return
      */
     BufferedImage readBufImg() {
+        if (imgSrc == null) {
+            logger.log(Level.WARNING, "Image source is not initialized. Call openConnection() first.");
+            return null;
+        }
         Mat mat = imgSrc.getNextMat();
         return Mat2BufferedImage(mat);
     }
@@ -77,11 +81,19 @@ public class ImageDataProcessor {
      * @return Image
      */
     public Image readImg() {
+        if (imgSrc == null) {
+            logger.log(Level.WARNING, "Image source is not initialized. Call openConnection() first.");
+            return null;
+        }
         Mat cropMat = this.cropMat(imgSrc.getNextMat());
         return Mat2Image(cropMat,".png");
     }
 
     public Mat readMat(){
+        if (imgSrc == null) {
+            logger.log(Level.WARNING, "Image source is not initialized. Call openConnection() first.");
+            return null;
+        }
         return imgSrc.getNextMat();
     }
 
