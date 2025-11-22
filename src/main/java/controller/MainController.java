@@ -31,6 +31,8 @@ public class MainController implements Controller {
     Tab trackingDataTab;
     @FXML
     Tab visualizationTab;
+    @FXML
+    Tab objectDetectionTab;
     // These three controller will be automatically injected since we annotated the "trackingData", "video" and "visual" element in the fxml
     @FXML
     TrackingDataController trackingDataController;
@@ -38,6 +40,8 @@ public class MainController implements Controller {
     VideoController videoController;
     @FXML
     VisualizationController visualizationController;
+    @FXML
+    ObjectDetectionController objectDetectionController;
     @FXML
     Label status;
     private FXMLLoader loader;
@@ -132,6 +136,11 @@ public class MainController implements Controller {
         visualizationManager.injectStatusLabel(status);
 
         videoController.setMainController(this);
+
+        // Connect ObjectDetectionController to video data manager
+        if (objectDetectionController != null && videoController != null) {
+            objectDetectionController.setImageDataManager(videoController.getDataManager());
+        }
     }
 
     @FXML
@@ -212,6 +221,17 @@ public class MainController implements Controller {
             });
         } catch(IOException e) {
             logger.log(Level.SEVERE, "Error loading AutoTrack View", e);
+        }
+    }
+
+    @FXML
+    private void openObjectDetectionView() {
+        // Switch to object detection tab (it's already loaded in MainView)
+        for (Tab tab : tabPane.getTabs()) {
+            if (tab.getText().equals("Object Detection")) {
+                tabPane.getSelectionModel().select(tab);
+                break;
+            }
         }
     }
 

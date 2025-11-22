@@ -260,4 +260,12 @@ public class VideoController implements Controller {
         this.rightSpinner.valueProperty().addListener((observable, oldValue, newValue) -> this.dataManager.getDataProcessor().setRightCrop(newValue));
         this.leftSpinner.valueProperty().addListener((observable ,oldValue, newValue) -> this.dataManager.getDataProcessor().setLeftCrop(newValue));
     }
+
+    /**
+     * Get the ImageDataManager for access by other controllers
+     * @return The ImageDataManager instance
+     */
+    public ImageDataManager getDataManager() {
+        return this.dataManager;
+    }
 }

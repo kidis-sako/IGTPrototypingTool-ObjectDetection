@@ -29,6 +29,7 @@
                     <MenuItem mnemonicParsing="false" onAction="#openThrombectomyView" text="Thrombectomy"/>
                     <MenuItem mnemonicParsing="false" onAction="#openAutoTrackView" text="AutoTrack"/>
                     <MenuItem mnemonicParsing="false" onAction="#openAIView" text="AI View"/>
+                    <MenuItem mnemonicParsing="false" onAction="#openObjectDetectionView" text="Object Detection"/>
                 </Menu>
             </Menu>
             <Menu mnemonicParsing="false" text="Help">
@@ -53,6 +54,11 @@
 
             <Tab closable="false" fx:id="annotationTab" text="Annotation" onSelectionChanged="#onChangeView">
                 <fx:include fx:id="annotation" source="AnnotationView.fxml"/>
+            </Tab>
+
+            <!-- Object Detection Tab -->
+            <Tab closable="false" fx:id="objectDetectionTab" text="Object Detection" onSelectionChanged="#onChangeView">
+                <fx:include fx:id="objectDetection" source="ObjectDetectionView.fxml"/>
             </Tab>
 
         </TabPane>
