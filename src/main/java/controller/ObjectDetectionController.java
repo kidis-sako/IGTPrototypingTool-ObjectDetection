@@ -101,7 +101,7 @@ public class ObjectDetectionController {
     private UltrasoundObjectDetector detector;
     private ImageDataManager imageDataManager;
     private Mat currentImage;
-    private String defaultImagePath = "/circle.jpg";  // Path to default image resource
+    private String defaultImagePath = "/perfect-circle.png";  // Path to default image resource
     private Logger logger = Logger.getLogger(this.getClass().getName());
     
     /**
