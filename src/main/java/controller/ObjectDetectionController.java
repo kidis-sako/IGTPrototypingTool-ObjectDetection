@@ -96,6 +96,18 @@ public class ObjectDetectionController {
     private Label originalMeasurementLabel;
     @FXML
     private Label detectionMeasurementLabel;
+    @FXML
+    private CheckBox calibrationModeCheckBox;
+    @FXML
+    private Label calibrationStatusLabel;
+    @FXML
+    private Label calibrationReferenceLabel;
+    @FXML
+    private Label calibrationScaleLabel;
+    @FXML
+    private TextField calibrationMmField;
+    @FXML
+    private Button applyCalibrationButton;
 
     private UltrasoundObjectDetector detector;
     private ImageDataManager imageDataManager;
@@ -106,6 +118,7 @@ public class ObjectDetectionController {
     private static final String DETECTION_CONTEXT = "Detection Image";
     private final MeasurementState originalMeasurementState = new MeasurementState();
     private final MeasurementState detectionMeasurementState = new MeasurementState();
+    private final CalibrationState calibrationState = new CalibrationState();
 
     /**
      * Initialize the controller
@@ -132,6 +145,7 @@ public class ObjectDetectionController {
 
         // Measurement tools
         initializeMeasurementControls();
+        updateCalibrationUi();
 
         // Initially visualize is checked
         visualizeCheckBox.setSelected(true);
@@ -452,7 +466,13 @@ public class ObjectDetectionController {
             });
         }
         if (clearMeasurementButton != null) {
-            clearMeasurementButton.setOnAction(e -> resetAllMeasurements());
+            clearMeasurementButton.setOnAction(e -> {
+                resetAllMeasurements();
+                if (calibrationState.isActive()) {
+                    calibrationState.clearMeasurementReference();
+                    calibrationReferenceLabel.setText("Reference: –");
+                }
+            });
         }
         if (originalOverlayCanvas != null) {
             originalOverlayCanvas.addEventHandler(MouseEvent.MOUSE_CLICKED,
@@ -507,6 +527,7 @@ public class ObjectDetectionController {
             double distance = calculatePixelDistance(state);
             outputLabel.setText(String.format("%s: %.2f px", contextLabel, distance));
             appendMeasurementResult(contextLabel, state, distance);
+            maybeHandleCalibration(distance);
             measurementStatusLabel.setText(String.format("%s measurement logged (%.2f px).",
                     contextLabel, distance));
             return;
@@ -568,6 +589,10 @@ public class ObjectDetectionController {
                 state.getSecondPoint().getX(),
                 state.getSecondPoint().getY()
         ));
+        if (calibrationState.hasScale()) {
+            double mmValue = distance * calibrationState.getScale();
+            resultsTextArea.appendText(String.format("   => %.2f mm (Calibration active)%n", mmValue));
+        }
     }
 
     private void resetMeasurementForContext(MeasurementState state, Canvas canvas, Label label, String prefix) {
@@ -591,6 +616,10 @@ public class ObjectDetectionController {
                     ? "Measurement enabled. Click two points in either image."
                     : "Measurement disabled");
         }
+        if (!calibrationState.isCalibrating()) {
+            calibrationState.clearMeasurementReference();
+            calibrationReferenceLabel.setText("Reference: –");
+        }
     }
 
     private ImageTransform createTransform(ImageView imageView, Canvas canvas) {
@@ -607,6 +636,138 @@ public class ObjectDetectionController {
             return null;
         }
         return new ImageTransform(imageView.getImage(), canvasWidth, canvasHeight);
+    }
+
+    @FXML
+    private void handleCalibrationToggle(ActionEvent event) {
+        boolean enabled = calibrationModeCheckBox.isSelected();
+        calibrationState.reset();
+        calibrationState.setCalibrating(enabled);
+        calibrationMmField.setDisable(!enabled);
+        applyCalibrationButton.setDisable(!enabled);
+        updateCalibrationUi();
+    }
+
+    @FXML
+    private void handleApplyCalibration(ActionEvent event) {
+        if (!calibrationState.hasReferenceDistance()) {
+            showAlert("Calibration", "Please measure a reference distance in pixels first.");
+            return;
+        }
+        String mmText = calibrationMmField.getText();
+        if (mmText == null || mmText.isBlank()) {
+            showAlert("Calibration", "Please enter the real distance in millimeters.");
+            return;
+        }
+        double mmValue;
+        try {
+            mmValue = Double.parseDouble(mmText);
+        } catch (NumberFormatException ex) {
+            showAlert("Calibration", "Invalid millimeter value.");
+            return;
+        }
+        if (mmValue <= 0) {
+            showAlert("Calibration", "The distance must be greater than 0.");
+            return;
+        }
+        if (calibrationState.getReferencePixels() <= 0) {
+            showAlert("Calibration", "Reference distance invalid. Please measure again.");
+            calibrationState.clearMeasurementReference();
+            return;
+        }
+        double scale = mmValue / calibrationState.getReferencePixels();
+        calibrationState.setScale(scale);
+        calibrationState.setCalibrating(false);
+        updateCalibrationUi();
+        measurementStatusLabel.setText(String.format("Calibration active: 1 px = %.3f mm", scale));
+    }
+
+    private void maybeHandleCalibration(double distancePx) {
+        if (!calibrationState.isCalibrating()) {
+            return;
+        }
+        calibrationState.setReferencePixels(distancePx);
+        calibrationReferenceLabel.setText(String.format("Reference: %.2f px", distancePx));
+        measurementStatusLabel.setText("Reference distance stored. Please enter the millimeter value.");
+    }
+
+    private void updateCalibrationUi() {
+        if (calibrationModeCheckBox == null) {
+            return;
+        }
+        boolean enabled = calibrationModeCheckBox.isSelected();
+        calibrationMmField.setDisable(!enabled);
+        applyCalibrationButton.setDisable(!enabled);
+        if (!enabled) {
+            calibrationState.reset();
+            calibrationStatusLabel.setText("Calibration disabled");
+            calibrationReferenceLabel.setText("Reference: –");
+            calibrationScaleLabel.setText("Scale: –");
+            calibrationMmField.clear();
+            return;
+        }
+        if (calibrationState.hasScale()) {
+            calibrationStatusLabel.setText("Calibration active");
+            calibrationScaleLabel.setText(String.format("Scale: 1 px = %.3f mm", calibrationState.getScale()));
+        } else if (calibrationState.hasReferenceDistance()) {
+            calibrationStatusLabel.setText("Reference stored – enter mm value");
+            calibrationScaleLabel.setText("Scale: –");
+        } else {
+            calibrationStatusLabel.setText("Calibration active – pick reference");
+            calibrationScaleLabel.setText("Scale: –");
+        }
+    }
+
+    private static class CalibrationState {
+        private boolean calibrating;
+        private double referencePixels;
+        private Double scale;
+
+        boolean isCalibrating() {
+            return calibrating;
+        }
+
+        void setCalibrating(boolean calibrating) {
+            this.calibrating = calibrating;
+        }
+
+        boolean isActive() {
+            return scale != null;
+        }
+
+        boolean hasScale() {
+            return scale != null;
+        }
+
+        double getScale() {
+            return scale == null ? 0 : scale;
+        }
+
+        void setScale(double scale) {
+            this.scale = scale;
+        }
+
+        boolean hasReferenceDistance() {
+            return referencePixels > 0;
+        }
+
+        void setReferencePixels(double referencePixels) {
+            this.referencePixels = referencePixels;
+        }
+
+        double getReferencePixels() {
+            return referencePixels;
+        }
+
+        void clearMeasurementReference() {
+            this.referencePixels = 0;
+        }
+
+        void reset() {
+            calibrating = false;
+            referencePixels = 0;
+            scale = null;
+        }
     }
 
     private static class MeasurementState {

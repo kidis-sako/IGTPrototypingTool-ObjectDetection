@@ -143,6 +143,16 @@
                     <Separator/>
                     <Label fx:id="originalMeasurementLabel" text="Original Image: –" style="-fx-font-weight: bold;" wrapText="true"/>
                     <Label fx:id="detectionMeasurementLabel" text="Detection Image: –" style="-fx-font-weight: bold;" wrapText="true"/>
+                    <Separator/>
+                    <CheckBox fx:id="calibrationModeCheckBox" text="Calibration" onAction="#handleCalibrationToggle"/>
+                    <Label fx:id="calibrationStatusLabel" text="Calibration disabled" wrapText="true"/>
+                    <Label fx:id="calibrationReferenceLabel" text="Reference: –"/>
+                    <Label fx:id="calibrationScaleLabel" text="Scale: –"/>
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <TextField fx:id="calibrationMmField" promptText="Actual distance (mm)" disable="true"/>
+                        <Button fx:id="applyCalibrationButton" text="Apply calibration"
+                                onAction="#handleApplyCalibration" disable="true"/>
+                    </HBox>
                 </VBox>
             </TitledPane>
 
