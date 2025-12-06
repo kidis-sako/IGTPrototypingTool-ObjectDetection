@@ -255,6 +255,46 @@ public class ObjectDetectionController {
     }
 
     /**
+     * Handle auto-threshold estimation button click
+     */
+    @FXML
+    public void handleAutoThreshold(ActionEvent event) {
+        if (currentImage == null || currentImage.empty()) {
+            showAlert("No Image", "Please load an image first to estimate thresholds");
+            return;
+        }
+
+        try {
+            // Use the detector's auto-threshold estimation
+            double[] thresholds = detector.estimateCannyThresholds(currentImage);
+            
+            // Update the sliders with estimated values
+            cannyThreshold1Slider.setValue(thresholds[0]);
+            cannyThreshold2Slider.setValue(thresholds[1]);
+            
+            // Update labels
+            cannyThreshold1Label.setText(String.format("%.0f", thresholds[0]));
+            cannyThreshold2Label.setText(String.format("%.0f", thresholds[1]));
+            
+            // Apply thresholds to detector
+            detector.setCannyThresholds(thresholds[0], thresholds[1]);
+            
+            // Log to results
+            resultsTextArea.appendText(String.format(
+                "Auto-estimated Canny thresholds: Lower=%.1f, Upper=%.1f\n\n",
+                thresholds[0], thresholds[1]
+            ));
+            
+            logger.info(String.format("Auto-estimated thresholds: %.1f / %.1f", 
+                thresholds[0], thresholds[1]));
+                
+        } catch (Exception e) {
+            logger.warning("Failed to auto-estimate thresholds: " + e.getMessage());
+            showAlert("Error", "Failed to auto-estimate thresholds: " + e.getMessage());
+        }
+    }
+
+    /**
      * Handle detect button click
      */
     @FXML

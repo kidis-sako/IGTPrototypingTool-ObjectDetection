@@ -85,6 +85,8 @@
                             <Label fx:id="cannyThreshold2Label" text="150" prefWidth="40"
                                    style="-fx-font-weight: bold;"/>
                         </HBox>
+                        <Button text="Auto-Estimate Thresholds" onAction="#handleAutoThreshold"
+                                prefWidth="300" style="-fx-font-size: 11px;"/>
                     </VBox>
 
                     <Separator/>
