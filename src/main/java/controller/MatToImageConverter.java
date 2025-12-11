@@ -13,11 +13,19 @@ public class MatToImageConverter {
 
     public static Image matToImage(Mat mat) {
         // Convert the Mat to an Image
+        Mat processedMat = mat;
+        
+        // Check if the depth is CV_8S and convert to CV_8U
+        if (mat.depth() == CvType.CV_8S) {
+            processedMat = new Mat();
+            mat.convertTo(processedMat, CvType.CV_8U);
+        }
+        
         Mat convertedMat = new Mat();
-        if (mat.channels() == 1) {
-            Imgproc.cvtColor(mat, convertedMat, Imgproc.COLOR_GRAY2RGB);
-        } else if (mat.channels() == 3) {
-            Imgproc.cvtColor(mat, convertedMat, Imgproc.COLOR_BGR2RGB);
+        if (processedMat.channels() == 1) {
+            Imgproc.cvtColor(processedMat, convertedMat, Imgproc.COLOR_GRAY2RGB);
+        } else if (processedMat.channels() == 3) {
+            Imgproc.cvtColor(processedMat, convertedMat, Imgproc.COLOR_BGR2RGB);
         }
 
         int width = convertedMat.cols();
